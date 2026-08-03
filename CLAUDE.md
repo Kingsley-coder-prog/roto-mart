@@ -197,7 +197,7 @@ Resolved decisions (do not reopen): buyer accounts → **guest + tracking link**
 
 Each item = one feature session: plan → implement → verify → check off here.
 
-- [ ] **F1. Scaffolding** — backend (Express app, error handler, env loading) + frontend (Vite + Vue 3 + router + Pinia) + repo wired to GitHub remote
+- [x] **F1. Scaffolding** — backend (Express app, error handler, env loading) + frontend (Vite + Vue 3 + router + Pinia) + repo wired to GitHub remote ✓ 2026-08-03
 - [ ] **F2. Sheets infra** — `infra/sheets.js` with batch read/append/update helpers against the RotoMart DB sheet
 - [ ] **F3. Products + Categories API** — public read endpoints, backed by Sheets
 - [ ] **F4. Storefront catalog** — product list, category filter, product detail page
