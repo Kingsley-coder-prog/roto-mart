@@ -199,7 +199,7 @@ Each item = one feature session: plan → implement → verify → check off her
 
 - [x] **F1. Scaffolding** — backend (Express app, error handler, env loading) + frontend (Vite + Vue 3 + router + Pinia) + repo wired to GitHub remote ✓ 2026-08-03
 - [x] **F2. Sheets infra** — `infra/sheets.js` with batch read/append/update helpers against the RotoMart DB sheet ✓ 2026-08-04 (also: `deleteRow` for Categories hard-delete, `ensureHeaders` via `scripts/setup-sheets.js`; rows carry `_row` for updates)
-- [ ] **F3. Products + Categories API** — public read endpoints, backed by Sheets
+- [x] **F3. Products + Categories API** — public read endpoints, backed by Sheets ✓ 2026-08-04 (30s in-memory cache per service to protect Sheets quota — admin CRUD in F9 must call `invalidateProductCache`/`invalidateCategoryCache`; sample data seeded via `scripts/seed-samples.js`; `active` stored as `TRUE`/`FALSE` strings)
 - [ ] **F4. Storefront catalog** — product list, category filter, product detail page
 - [ ] **F5. Cart + Checkout UI** — Pinia cart, checkout form (name/email/phone/address)
 - [ ] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log
