@@ -11,6 +11,12 @@ This file gives Claude (and any engineer) the full context needed to work on the
 3. **CLAUDE.md is the contract.** Any decision made during a session (schema change, new endpoint, new env var, provider choice) gets recorded here immediately. If code and this file disagree, this file wins — fix one of them.
 4. **Certified = frozen.** Once a feature is verified working and checked off in §12, don't refactor or restyle it while building other features unless a change is explicitly required.
 5. **Frugal output.** Short commits, no boilerplate comments, no speculative abstractions. Build what the feature needs, nothing more.
+6. **Commits:** no `Co-Authored-By` trailers (owner's preference).
+
+### Branding (DECIDED — "Fresh Market Green")
+
+CSS custom properties in `frontend/src/assets/main.css` — always use the tokens, never raw hex in components:
+`--green: #166534` (primary: header, buttons) · `--amber: #f59e0b` (prices, buy CTAs) · `--cream: #faf7f2` (page background) · `--surface: #fff` (cards) · `--ink: #1c1917` (text). Cards: white, rounded, soft shadow. Currency: NGN (`₦`, thousands-separated).
 
 ## 1. Project Overview
 
@@ -200,7 +206,7 @@ Each item = one feature session: plan → implement → verify → check off her
 - [x] **F1. Scaffolding** — backend (Express app, error handler, env loading) + frontend (Vite + Vue 3 + router + Pinia) + repo wired to GitHub remote ✓ 2026-08-03
 - [x] **F2. Sheets infra** — `infra/sheets.js` with batch read/append/update helpers against the RotoMart DB sheet ✓ 2026-08-04 (also: `deleteRow` for Categories hard-delete, `ensureHeaders` via `scripts/setup-sheets.js`; rows carry `_row` for updates)
 - [x] **F3. Products + Categories API** — public read endpoints, backed by Sheets ✓ 2026-08-04 (30s in-memory cache per service to protect Sheets quota — admin CRUD in F9 must call `invalidateProductCache`/`invalidateCategoryCache`; sample data seeded via `scripts/seed-samples.js`; `active` stored as `TRUE`/`FALSE` strings)
-- [ ] **F4. Storefront catalog** — product list, category filter, product detail page
+- [x] **F4. Storefront catalog** — product list, category filter, product detail page ✓ 2026-08-04 (owner approved the look; tokens in `assets/main.css`, catalog Pinia store, `utils/format.js` for ₦)
 - [ ] **F5. Cart + Checkout UI** — Pinia cart, checkout form (name/email/phone/address)
 - [ ] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log
 - [ ] **F7. Notifications** — Brevo confirmation + status emails, tracking page `/track/:orderId`
