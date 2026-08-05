@@ -86,15 +86,21 @@ Design it like a simple, friendly dashboard (forms, buttons, image drag-and-drop
 
 ## 6. Payment Flow (Paystack Split)
 
-1. Buyer checks out → backend creates a **Paystack Transaction** with `subaccount` split configured.
-2. Set up **one Paystack Subaccount** for the admin/client (their settlement bank account) ahead of time.
+**Account ownership — Config B (DECIDED 2026-08-05):** the **client is the main Paystack account** (merchant of record — owns the integration/API keys, sets the branding buyers see on checkout/receipts/statements, bears refunds and compliance) and the **developer is a 7% subaccount** on the client's account. This is the correct end-state for a client-owned store: the client keeps 93% in their own main balance, and the developer's 7% settles automatically to the developer's subaccount. (The earlier draft had these reversed — client as subaccount; rejected because it made the developer merchant-of-record, put the developer's keys permanently in the live app, and made refunds pull from the developer's balance.)
+
+**Why the client's BVN isn't needed yet:** a Paystack account works in **test mode with no KYC**. BVN / business docs / bank verification are only required to **go live**. So all development runs in test mode now; the client's real KYC + bank is a go-live/handover step (§10). Whose account we test on doesn't affect the code.
+
+Transaction flow:
+1. Buyer checks out → backend creates a **Paystack Transaction** on the **client's** integration with the developer's subaccount split configured.
+2. Ahead of go-live: client completes their own Paystack registration (their email + **their** BVN/bank); developer registers a subaccount on it (developer's bank account — light verification, no client BVN involved).
 3. On each transaction, use Paystack's `transaction/initialize` with:
-   - `subaccount`: admin's subaccount code (from `PAYSTACK_ADMIN_SUBACCOUNT_CODE`)
-   - `bearer`: `account` — the main (developer) account absorbs Paystack's own fee
-   - `transaction_charge`: **7% of the total, in kobo, computed per transaction** — this is explicitly the main (developer) account's cut; the remainder (93%) settles to the admin's subaccount. **DECIDED 2026-08-05:** we pass `transaction_charge` explicitly on every init instead of relying on the subaccount's `percentage_charge` default, because Paystack's docs are ambiguous about which direction `percentage_charge` points (doc versions contradict each other). The explicit per-transaction override is unambiguous. The subaccount was still created with `percentage_charge: 7` as a backstop.
-   - Test subaccount `ACCT_9xaaes6d59yct8p` (test bank Zenith/0000000000) is in `backend/.env`. **Before go-live: replace with a subaccount registered under the client's real bank details** (Handover §10).
+   - `subaccount`: **developer's** subaccount code (env `PAYSTACK_DEVELOPER_SUBACCOUNT_CODE`)
+   - `bearer`: `account` — the main (client) account absorbs Paystack's own fee
+   - `transaction_charge`: **93% of the total, in kobo, per transaction** — `transaction_charge` is the amount routed to the MAIN account (empirically confirmed in the F6 test), so it holds the client's 93%; the remaining 7% settles to the developer's subaccount. We pass it explicitly rather than relying on the subaccount's `percentage_charge` because Paystack's docs contradict themselves on that field's direction.
 4. Verify the transaction server-side via `transaction/verify` (never trust the frontend) before marking the order as paid and writing to the `Orders` sheet.
 5. Log the split amounts to the `Payouts` tab for transparency — use the **actual `fees_split` figures from the verify response** (ground truth from Paystack), falling back to computed 7/93 only if absent.
+
+**Current F6/F7 test wiring is interim Config A** (developer's test account is main, `PAYSTACK_ADMIN_SUBACCOUNT_CODE` = client-stand-in subaccount, `transaction_charge` = 7%). Code works and verifies correctly; the swap to Config B is a go-live task: point `subaccount` at the developer's code, change the charge to 93%, and load the client's API keys. Payment service is written so this is a small, localized change.
 
 Alternative if more than 2 parties are ever needed later: Paystack **Transaction Split** objects (multiple subaccounts with defined percentages) instead of a single subaccount — worth designing the payment service function so this swap is easy.
 
@@ -186,7 +192,9 @@ FRONTEND_URL=            # used to build tracking links in emails
 
 - [ ] Admin dashboard covers every action the admin needs — no task requires opening the Google Sheet or code directly
 - [ ] Admin has their own login credentials (not the developer's)
-- [ ] Paystack subaccount is registered under the **admin's own bank details**, verified with a small test transaction
+- [ ] **Paystack Config B live setup** (see §6): client completes their OWN Paystack account (their email + **their** BVN/business docs + their bank) as the main/merchant account; developer registers a subaccount on it (developer's bank). Then in the app: set `PAYSTACK_DEVELOPER_SUBACCOUNT_CODE`, swap in the **client's** live API keys, change `transaction_charge` to 93%, and verify with a small real transaction that client got 93% + developer got 7%.
+- [ ] Rename the Paystack business to **RotoMart** and support email to **irotomart@gmail.com**; turn off Paystack's own customer receipt email (we send our own branded confirmation) so buyers don't get a second, off-brand email.
+- [ ] Verify the Brevo sender (irotomart@gmail.com, ideally a domain) so confirmation/status emails don't land in spam
 - [ ] Record/document the 7% split logic clearly in the dashboard's payout log so it's transparent to the admin
 - [ ] Provide the admin a short screen-recorded walkthrough (product creation, image upload, order fulfillment) — non-technical users retain video instructions far better than written docs
 - [ ] Confirm Google Sheets service account has Editor access and won't expire
