@@ -4,6 +4,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 import productsRoutes from './modules/products/products.routes.js';
 import categoriesRoutes from './modules/categories/categories.routes.js';
 import ordersRoutes from './modules/orders/orders.routes.js';
+import authRoutes from './modules/auth/auth.routes.js';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/products', productsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/admin', authRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(errorHandler);
