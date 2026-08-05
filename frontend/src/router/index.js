@@ -7,6 +7,7 @@ const routes = [
   { path: '/cart', name: 'cart', component: () => import('../views/storefront/Cart.vue') },
   { path: '/checkout', name: 'checkout', component: () => import('../views/storefront/Checkout.vue') },
   { path: '/payment/callback', name: 'payment-callback', component: () => import('../views/storefront/PaymentCallback.vue') },
+  { path: '/track/:orderId', name: 'track', component: () => import('../views/storefront/TrackOrder.vue') },
   // Admin group — pages added in F8–F10
   { path: '/admin', name: 'admin', component: () => import('../views/admin/Placeholder.vue') },
 ];

@@ -38,8 +38,8 @@ onMounted(async () => {
 
     <div v-else-if="state === 'success'" class="card panel">
       <h1>Payment confirmed 🎉</h1>
-      <p class="order-id">Order <strong>{{ order.orderId }}</strong></p>
-      <p class="note">Keep this order number — you'll use it to track your delivery.</p>
+      <p class="order-id">Order <RouterLink :to="`/track/${order.orderId}`"><strong>{{ order.orderId }}</strong></RouterLink></p>
+      <p class="note">Keep this order number — you'll use it to track your delivery. A confirmation email with your tracking link is on its way.</p>
       <p v-for="i in order.items" :key="i.id" class="row">
         <span>{{ i.name }} × {{ i.qty }}</span><span>{{ naira(i.price * i.qty) }}</span>
       </p>

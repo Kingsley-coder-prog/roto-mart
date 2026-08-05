@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { getRows, appendRow, updateRow } from '../../infra/sheets.js';
 import { listActive, invalidateProductCache } from '../products/products.service.js';
 import { initPayment, verifyPayment } from '../payments/payments.service.js';
+import { sendOrderConfirmation } from '../notifications/notifications.service.js';
 
 const bad = (msg) => { const e = new Error(msg); e.status = 400; return e; };
 
@@ -96,7 +97,9 @@ export async function verifyOrder(reference) {
     date: new Date().toISOString(),
   });
 
-  return { ...publicView(order), status: 'paid', paid: true };
+  const view = { ...publicView(order), status: 'paid', paid: true };
+  sendOrderConfirmation(order.buyerEmail, view); // fire-and-forget (§6a)
+  return view;
 }
 
 /** Public tracking endpoint — non-sensitive fields only (no buyer contact details). */
