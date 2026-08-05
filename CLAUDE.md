@@ -89,11 +89,12 @@ Design it like a simple, friendly dashboard (forms, buttons, image drag-and-drop
 1. Buyer checks out → backend creates a **Paystack Transaction** with `subaccount` split configured.
 2. Set up **one Paystack Subaccount** for the admin/client (their settlement bank account) ahead of time.
 3. On each transaction, use Paystack's `transaction/initialize` with:
-   - `subaccount`: admin's subaccount code
-   - `bearer_type`: `subaccount` or `account` (decide who absorbs Paystack's own fee — usually `account`, i.e. the platform/developer side)
-   - The split logic: **93% to the admin's subaccount, 7% retained on the main (developer) Paystack account** — this is the standard behavior when you set the subaccount's `percentage_charge` to 93 (Paystack sends the subaccount their %, and the remainder stays on the main integration account, which is the developer's).
+   - `subaccount`: admin's subaccount code (from `PAYSTACK_ADMIN_SUBACCOUNT_CODE`)
+   - `bearer`: `account` — the main (developer) account absorbs Paystack's own fee
+   - `transaction_charge`: **7% of the total, in kobo, computed per transaction** — this is explicitly the main (developer) account's cut; the remainder (93%) settles to the admin's subaccount. **DECIDED 2026-08-05:** we pass `transaction_charge` explicitly on every init instead of relying on the subaccount's `percentage_charge` default, because Paystack's docs are ambiguous about which direction `percentage_charge` points (doc versions contradict each other). The explicit per-transaction override is unambiguous. The subaccount was still created with `percentage_charge: 7` as a backstop.
+   - Test subaccount `ACCT_9xaaes6d59yct8p` (test bank Zenith/0000000000) is in `backend/.env`. **Before go-live: replace with a subaccount registered under the client's real bank details** (Handover §10).
 4. Verify the transaction server-side via `transaction/verify` (never trust the frontend) before marking the order as paid and writing to the `Orders` sheet.
-5. Log the split amounts to the `Payouts` tab for transparency.
+5. Log the split amounts to the `Payouts` tab for transparency — use the **actual `fees_split` figures from the verify response** (ground truth from Paystack), falling back to computed 7/93 only if absent.
 
 Alternative if more than 2 parties are ever needed later: Paystack **Transaction Split** objects (multiple subaccounts with defined percentages) instead of a single subaccount — worth designing the payment service function so this swap is easy.
 
@@ -208,7 +209,7 @@ Each item = one feature session: plan → implement → verify → check off her
 - [x] **F3. Products + Categories API** — public read endpoints, backed by Sheets ✓ 2026-08-04 (30s in-memory cache per service to protect Sheets quota — admin CRUD in F9 must call `invalidateProductCache`/`invalidateCategoryCache`; sample data seeded via `scripts/seed-samples.js`; `active` stored as `TRUE`/`FALSE` strings)
 - [x] **F4. Storefront catalog** — product list, category filter, product detail page ✓ 2026-08-04 (owner approved the look; tokens in `assets/main.css`, catalog Pinia store, `utils/format.js` for ₦)
 - [x] **F5. Cart + Checkout UI** — Pinia cart, checkout form (name/email/phone/address) ✓ 2026-08-05 (cart persists to localStorage so the Paystack redirect won't lose it; qty clamped to stock; checkout submit is a stub F6 replaces with POST /api/orders)
-- [ ] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log. **Server must re-read products from Sheets and recompute line prices + total itself** — the cart (localStorage) carries price/stock snapshots from add-time that can be stale; never charge a client-supplied amount. Validate stock at order creation too.
+- [x] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log ✓ 2026-08-05 (server re-reads products and recomputes totals — never trusts the cart; order id doubles as Paystack reference; row appended pending_payment BEFORE init; split via explicit `transaction_charge` (§6), verified live: admin got exactly 93%, developer 7% net of Paystack's fee; Payouts logs actual `fees_split`; stock decremented on verify + `invalidateProductCache`; verify is idempotent)
 - [ ] **F7. Notifications** — Brevo confirmation + status emails, tracking page `/track/:orderId`
 - [ ] **F8. Admin auth** — login endpoint, JWT middleware, admin route guard
 - [ ] **F9. Admin: products & categories** — CRUD UI with Cloudinary image upload

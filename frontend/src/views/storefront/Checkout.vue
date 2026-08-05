@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useCartStore } from '../../stores/cart.js';
+import { createOrder } from '../../api/orders.js';
 import { naira } from '../../utils/format.js';
 
 const cart = useCartStore();
@@ -21,9 +22,16 @@ async function submit() {
   error.value = validate();
   if (error.value) return;
   submitting.value = true;
-  // F6 replaces this stub with POST /api/orders → Paystack redirect.
-  error.value = 'Payment is not connected yet — coming in the next build step.';
-  submitting.value = false;
+  try {
+    const { authorizationUrl } = await createOrder({
+      ...form,
+      items: cart.items.map((i) => ({ id: i.id, qty: i.qty })),
+    });
+    window.location.href = authorizationUrl; // off to Paystack's payment page
+  } catch (e) {
+    error.value = e.message;
+    submitting.value = false;
+  }
 }
 </script>
 

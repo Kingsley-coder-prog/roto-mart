@@ -3,6 +3,7 @@ import cors from 'cors';
 import { errorHandler } from './middleware/errorHandler.js';
 import productsRoutes from './modules/products/products.routes.js';
 import categoriesRoutes from './modules/categories/categories.routes.js';
+import ordersRoutes from './modules/orders/orders.routes.js';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Feature module routers are mounted here as they are built (see CLAUDE.md §12)
 app.use('/api/products', productsRoutes);
 app.use('/api/categories', categoriesRoutes);
+app.use('/api/orders', ordersRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(errorHandler);
