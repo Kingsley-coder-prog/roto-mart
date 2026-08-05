@@ -207,8 +207,8 @@ Each item = one feature session: plan → implement → verify → check off her
 - [x] **F2. Sheets infra** — `infra/sheets.js` with batch read/append/update helpers against the RotoMart DB sheet ✓ 2026-08-04 (also: `deleteRow` for Categories hard-delete, `ensureHeaders` via `scripts/setup-sheets.js`; rows carry `_row` for updates)
 - [x] **F3. Products + Categories API** — public read endpoints, backed by Sheets ✓ 2026-08-04 (30s in-memory cache per service to protect Sheets quota — admin CRUD in F9 must call `invalidateProductCache`/`invalidateCategoryCache`; sample data seeded via `scripts/seed-samples.js`; `active` stored as `TRUE`/`FALSE` strings)
 - [x] **F4. Storefront catalog** — product list, category filter, product detail page ✓ 2026-08-04 (owner approved the look; tokens in `assets/main.css`, catalog Pinia store, `utils/format.js` for ₦)
-- [ ] **F5. Cart + Checkout UI** — Pinia cart, checkout form (name/email/phone/address)
-- [ ] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log
+- [x] **F5. Cart + Checkout UI** — Pinia cart, checkout form (name/email/phone/address) ✓ 2026-08-05 (cart persists to localStorage so the Paystack redirect won't lose it; qty clamped to stock; checkout submit is a stub F6 replaces with POST /api/orders)
+- [ ] **F6. Orders + Payments** — create order, Paystack init with 93/7 split, server-side verify, write to Sheets, payout log. **Server must re-read products from Sheets and recompute line prices + total itself** — the cart (localStorage) carries price/stock snapshots from add-time that can be stale; never charge a client-supplied amount. Validate stock at order creation too.
 - [ ] **F7. Notifications** — Brevo confirmation + status emails, tracking page `/track/:orderId`
 - [ ] **F8. Admin auth** — login endpoint, JWT middleware, admin route guard
 - [ ] **F9. Admin: products & categories** — CRUD UI with Cloudinary image upload

@@ -3,12 +3,22 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { fetchProduct } from '../../api/catalog.js';
 import { useCatalogStore } from '../../stores/catalog.js';
+import { useCartStore } from '../../stores/cart.js';
 import { naira } from '../../utils/format.js';
 
 const route = useRoute();
 const catalog = useCatalogStore();
+const cart = useCartStore();
 const product = ref(null);
 const error = ref(null);
+const qty = ref(1);
+const added = ref(false);
+
+function addToCart() {
+  cart.add(product.value, qty.value);
+  added.value = true;
+  setTimeout(() => (added.value = false), 1800);
+}
 
 onMounted(async () => {
   catalog.load(); // for the category name; fires in parallel
@@ -38,8 +48,15 @@ onMounted(async () => {
         <p class="stock" :class="{ out: product.stock <= 0 }">
           {{ product.stock > 0 ? `${product.stock} in stock` : 'Out of stock' }}
         </p>
-        <!-- Add-to-cart button lands in F5 -->
-        <button class="btn btn-buy" disabled title="Cart coming soon">Add to cart</button>
+        <div v-if="product.stock > 0" class="buy-row">
+          <div class="qty">
+            <button @click="qty = Math.max(1, qty - 1)" :disabled="qty <= 1">−</button>
+            <span>{{ qty }}</span>
+            <button @click="qty = Math.min(product.stock, qty + 1)" :disabled="qty >= product.stock">+</button>
+          </div>
+          <button class="btn btn-buy" @click="addToCart">{{ added ? 'Added ✓' : 'Add to cart' }}</button>
+          <RouterLink v-if="cart.count" to="/cart" class="view-cart">View cart →</RouterLink>
+        </div>
       </div>
     </article>
   </main>
@@ -60,4 +77,10 @@ h1 { margin: 0 0 0.5rem; letter-spacing: -0.5px; }
 .stock { font-weight: 600; color: var(--green); }
 .stock.out { color: #b91c1c; }
 .back { color: var(--green); font-weight: 600; }
+.buy-row { display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap; }
+.qty { display: flex; align-items: center; gap: 0.6rem; }
+.qty button { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; font-weight: 700; }
+.qty button:disabled { opacity: 0.4; }
+.qty span { min-width: 20px; text-align: center; font-weight: 700; }
+.view-cart { color: var(--green); font-weight: 600; }
 </style>

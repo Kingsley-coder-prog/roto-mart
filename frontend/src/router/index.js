@@ -4,6 +4,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 const routes = [
   { path: '/', name: 'home', component: () => import('../views/storefront/Home.vue') },
   { path: '/product/:id', name: 'product', component: () => import('../views/storefront/ProductDetail.vue') },
+  { path: '/cart', name: 'cart', component: () => import('../views/storefront/Cart.vue') },
+  { path: '/checkout', name: 'checkout', component: () => import('../views/storefront/Checkout.vue') },
   // Admin group — pages added in F8–F10
   { path: '/admin', name: 'admin', component: () => import('../views/admin/Placeholder.vue') },
 ];
