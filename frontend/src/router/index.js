@@ -11,7 +11,9 @@ const routes = [
   { path: '/track/:orderId', name: 'track', component: () => import('../views/storefront/TrackOrder.vue') },
   // Admin group
   { path: '/admin/login', name: 'admin-login', component: () => import('../views/admin/Login.vue') },
-  { path: '/admin', name: 'admin', component: () => import('../views/admin/Placeholder.vue'), meta: { requiresAdmin: true } },
+  { path: '/admin', redirect: '/admin/products' },
+  { path: '/admin/products', name: 'admin-products', component: () => import('../views/admin/Products.vue'), meta: { requiresAdmin: true } },
+  { path: '/admin/categories', name: 'admin-categories', component: () => import('../views/admin/Categories.vue'), meta: { requiresAdmin: true } },
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });
@@ -22,7 +24,7 @@ router.beforeEach((to) => {
     return { name: 'admin-login', query: { redirect: to.fullPath } };
   }
   if (to.name === 'admin-login' && admin.isAuthenticated) {
-    return { name: 'admin' };
+    return { path: '/admin' };
   }
 });
 
