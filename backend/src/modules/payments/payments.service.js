@@ -1,5 +1,6 @@
 // Owns the 93/7 split policy (CLAUDE.md §6). Amounts are naira in, kobo out.
 import { initializeTransaction, verifyTransaction } from '../../infra/paystack.js';
+import { getRows } from '../../infra/sheets.js';
 
 export const DEV_SHARE = 0.07; // developer keeps 7%, admin subaccount gets the rest
 
@@ -42,4 +43,19 @@ export async function verifyPayment(reference, expectedTotalNaira) {
   const developerShare = split.integration != null ? split.integration / 100 : expectedTotalNaira * DEV_SHARE;
   const adminShare = split.subaccount != null ? split.subaccount / 100 : expectedTotalNaira - developerShare;
   return { paid, gatewayStatus: data.status, developerShare, adminShare };
+}
+
+/** Admin payout log (F10), newest first — the recorded 7/93 split per paid order. */
+export async function listPayouts() {
+  const rows = await getRows('Payouts');
+  return rows
+    .map(({ _row, ...p }) => ({
+      id: p.id,
+      orderId: p.orderId,
+      totalAmount: Number(p.totalAmount),
+      developerShare: Number(p.developerShare),
+      adminShare: Number(p.adminShare),
+      date: p.date,
+    }))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }

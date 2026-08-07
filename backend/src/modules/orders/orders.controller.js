@@ -1,4 +1,4 @@
-import { createOrder, verifyOrder, trackOrder } from './orders.service.js';
+import { createOrder, verifyOrder, trackOrder, adminListOrders, updateOrderStatus } from './orders.service.js';
 
 export async function create(req, res, next) {
   try {
@@ -17,5 +17,19 @@ export async function track(req, res, next) {
     const order = await trackOrder(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found' });
     res.json(order);
+  } catch (err) { next(err); }
+}
+
+// ---- Admin (F10) ----
+
+export async function adminList(req, res, next) {
+  try {
+    res.json(await adminListOrders());
+  } catch (err) { next(err); }
+}
+
+export async function adminUpdateStatus(req, res, next) {
+  try {
+    res.json(await updateOrderStatus(req.params.id, req.body.status));
   } catch (err) { next(err); }
 }

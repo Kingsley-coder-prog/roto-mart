@@ -14,6 +14,8 @@ const routes = [
   { path: '/admin', redirect: '/admin/products' },
   { path: '/admin/products', name: 'admin-products', component: () => import('../views/admin/Products.vue'), meta: { requiresAdmin: true } },
   { path: '/admin/categories', name: 'admin-categories', component: () => import('../views/admin/Categories.vue'), meta: { requiresAdmin: true } },
+  { path: '/admin/orders', name: 'admin-orders', component: () => import('../views/admin/Orders.vue'), meta: { requiresAdmin: true } },
+  { path: '/admin/payouts', name: 'admin-payouts', component: () => import('../views/admin/Payouts.vue'), meta: { requiresAdmin: true } },
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });

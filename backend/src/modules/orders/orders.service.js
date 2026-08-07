@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { getRows, appendRow, updateRow } from '../../infra/sheets.js';
 import { listActive, invalidateProductCache } from '../products/products.service.js';
 import { initPayment, verifyPayment } from '../payments/payments.service.js';
-import { sendOrderConfirmation } from '../notifications/notifications.service.js';
+import { sendOrderConfirmation, sendStatusUpdate } from '../notifications/notifications.service.js';
 
 const bad = (msg) => { const e = new Error(msg); e.status = 400; return e; };
 
@@ -107,4 +107,42 @@ export async function trackOrder(id) {
   const orders = await getRows('Orders');
   const order = orders.find((o) => o.id === id);
   return order ? publicView(order) : null;
+}
+
+// ---- Admin (F10) -----------------------------------------------------------
+
+// Full order incl. buyer contact details (admin needs them to fulfill/deliver).
+const adminView = (o) => ({
+  id: o.id,
+  buyerName: o.buyerName,
+  buyerEmail: o.buyerEmail,
+  buyerPhone: o.buyerPhone,
+  buyerAddress: o.buyerAddress,
+  items: JSON.parse(o.items || '[]'),
+  total: Number(o.total),
+  status: o.status,
+  createdAt: o.createdAt,
+});
+
+/** All orders, newest first. */
+export async function adminListOrders() {
+  const orders = await getRows('Orders');
+  return orders.map(adminView).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+// Statuses the admin may set by hand (pending_payment/paid are system-driven).
+const SETTABLE = ['ready', 'shipped', 'delivered', 'cancelled'];
+
+export async function updateOrderStatus(id, status) {
+  if (!SETTABLE.includes(status)) throw bad(`Invalid status "${status}".`);
+  const orders = await getRows('Orders');
+  const order = orders.find((o) => o.id === id);
+  if (!order) { const e = new Error('Order not found'); e.status = 404; throw e; }
+  if (order.status === 'pending_payment') throw bad('This order has not been paid for yet.');
+
+  order.status = status;
+  await updateRow('Orders', order);
+  // Buyer email only on ready/shipped (§6a); helper ignores other statuses anyway.
+  sendStatusUpdate(order.buyerEmail, { orderId: order.id, status });
+  return adminView(order);
 }
