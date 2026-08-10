@@ -37,6 +37,22 @@ export function sendOrderConfirmation(to, order) {
   }), `confirmation ${order.orderId}`);
 }
 
+/** Admin alert when a sale drops products to/below the low-stock threshold (F11). */
+export function sendLowStockAlert(to, items) {
+  if (!to || !items?.length) return;
+  const rows = items
+    .map((i) => `<tr><td style="padding:4px 12px 4px 0">${i.name}</td><td align="right"><strong>${i.stock}</strong> left</td></tr>`)
+    .join('');
+  fireAndForget(sendEmail({
+    to,
+    subject: `Low stock alert — ${items.length} product${items.length > 1 ? 's' : ''} running low`,
+    html: shell(`
+      <p>These products just dropped to a low stock level after a sale — consider restocking:</p>
+      <table style="border-collapse:collapse">${rows}</table>
+      <p><a href="${process.env.FRONTEND_URL}/admin/products" style="background:#166534;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;display:inline-block">Manage products</a></p>`),
+  }), `low-stock (${items.length})`);
+}
+
 const STATUS_LINES = {
   ready: 'Your order is packed and ready — delivery is being arranged.',
   shipped: 'Your order is on its way!',

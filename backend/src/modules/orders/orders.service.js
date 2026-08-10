@@ -2,7 +2,9 @@ import crypto from 'node:crypto';
 import { getRows, appendRow, updateRow } from '../../infra/sheets.js';
 import { listActive, invalidateProductCache } from '../products/products.service.js';
 import { initPayment, verifyPayment } from '../payments/payments.service.js';
-import { sendOrderConfirmation, sendStatusUpdate } from '../notifications/notifications.service.js';
+import { sendOrderConfirmation, sendStatusUpdate, sendLowStockAlert } from '../notifications/notifications.service.js';
+
+const LOW_STOCK = Number(process.env.LOW_STOCK_THRESHOLD) || 5;
 
 const bad = (msg) => { const e = new Error(msg); e.status = 400; return e; };
 
@@ -80,13 +82,18 @@ export async function verifyOrder(reference) {
 
   const lines = JSON.parse(order.items || '[]');
   const products = await getRows('Products');
+  const nowLow = []; // products that just crossed into the low-stock band
   for (const line of lines) {
     const p = products.find((row) => row.id === line.id);
     if (!p) continue;
-    p.stock = String(Math.max(0, Number(p.stock) - line.qty));
+    const before = Number(p.stock);
+    const after = Math.max(0, before - line.qty);
+    p.stock = String(after);
     await updateRow('Products', p);
+    if (after <= LOW_STOCK && before > LOW_STOCK) nowLow.push({ name: p.name, stock: after });
   }
   invalidateProductCache();
+  if (nowLow.length) sendLowStockAlert(process.env.ADMIN_EMAIL, nowLow); // fire-and-forget
 
   await appendRow('Payouts', {
     id: `PO-${order.id}`,
