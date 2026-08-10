@@ -45,6 +45,7 @@ export async function createOrder({ name, email, phone, address, items }) {
     paystackRef: orderId, // order id doubles as the Paystack reference
     status: 'pending_payment',
     createdAt: new Date().toISOString(),
+    archived: 'FALSE',
   });
 
   const { authorizationUrl } = await initPayment({ email: email.trim(), totalNaira: total, reference: orderId });
@@ -122,12 +123,23 @@ const adminView = (o) => ({
   total: Number(o.total),
   status: o.status,
   createdAt: o.createdAt,
+  archived: o.archived === 'TRUE',
 });
 
-/** All orders, newest first. */
+/** All orders (incl. archived — UI filters), newest first. */
 export async function adminListOrders() {
   const orders = await getRows('Orders');
   return orders.map(adminView).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+}
+
+/** Hide/restore an order in the admin UI without deleting the sheet row (never hard-delete). */
+export async function archiveOrder(id, archived) {
+  const orders = await getRows('Orders');
+  const order = orders.find((o) => o.id === id);
+  if (!order) { const e = new Error('Order not found'); e.status = 404; throw e; }
+  order.archived = archived ? 'TRUE' : 'FALSE';
+  await updateRow('Orders', order);
+  return adminView(order);
 }
 
 // Statuses the admin may set by hand (pending_payment/paid are system-driven).

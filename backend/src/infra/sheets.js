@@ -8,7 +8,7 @@ import { google } from 'googleapis';
 export const TABS = {
   Products: ['id', 'name', 'category', 'price', 'stock', 'description', 'imageUrl', 'active', 'createdAt'],
   Categories: ['id', 'name', 'slug'],
-  Orders: ['id', 'buyerName', 'buyerEmail', 'buyerPhone', 'buyerAddress', 'items', 'subtotal', 'total', 'paystackRef', 'status', 'createdAt'],
+  Orders: ['id', 'buyerName', 'buyerEmail', 'buyerPhone', 'buyerAddress', 'items', 'subtotal', 'total', 'paystackRef', 'status', 'createdAt', 'archived'],
   Payouts: ['id', 'orderId', 'totalAmount', 'developerShare', 'adminShare', 'paystackSplitRef', 'date'],
 };
 

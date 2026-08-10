@@ -1,4 +1,4 @@
-import { createOrder, verifyOrder, trackOrder, adminListOrders, updateOrderStatus } from './orders.service.js';
+import { createOrder, verifyOrder, trackOrder, adminListOrders, updateOrderStatus, archiveOrder } from './orders.service.js';
 
 export async function create(req, res, next) {
   try {
@@ -31,5 +31,11 @@ export async function adminList(req, res, next) {
 export async function adminUpdateStatus(req, res, next) {
   try {
     res.json(await updateOrderStatus(req.params.id, req.body.status));
+  } catch (err) { next(err); }
+}
+
+export async function adminArchive(req, res, next) {
+  try {
+    res.json(await archiveOrder(req.params.id, req.body.archived !== false));
   } catch (err) { next(err); }
 }
