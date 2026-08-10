@@ -61,7 +61,9 @@ One Google Sheet ("RotoMart DB") with multiple tabs, each acting as a table:
 | id | name | slug |
 
 **Orders**
-| id | buyerName | buyerEmail | buyerPhone | buyerAddress | items (JSON string) | subtotal | total | paystackRef | status | createdAt |
+| id | buyerName | buyerEmail | buyerPhone | buyerAddress | items (JSON string) | subtotal | total | paystackRef | status | createdAt | archived |
+
+`archived` (`TRUE`/`FALSE`, added F11) hides an order from the admin list without deleting the sheet row — never hard-delete an order (a stuck-`pending_payment` row might actually be a real payment whose verify callback didn't land).
 
 Order `status` values: `pending_payment` → `paid` → `ready` → `shipped` → `delivered` (admin can also set `cancelled`). Status changes made from the admin dashboard trigger buyer emails (see §6a).
 
@@ -163,9 +165,11 @@ Rules: modules never import each other's controllers — cross-module needs go t
 - `POST /api/orders` — public, create order + init Paystack transaction
 - `GET /api/orders/verify/:reference` — public, verify payment on redirect (marks paid, writes to Sheets, sends confirmation email)
 - `GET /api/orders/track/:id` — public, order status for the tracking page (returns only non-sensitive fields)
-- `GET /api/admin/orders` — admin, list all orders
+- `GET /api/admin/orders` — admin, list all orders (incl. `archived` flag; UI filters)
 - `PATCH /api/admin/orders/:id/status` — admin, update status (triggers status email on `ready`/`shipped`)
+- `PATCH /api/admin/orders/:id/archive` — admin, hide/restore an order in the UI (keeps sheet row) [F11]
 - `GET /api/admin/payouts` — admin, payout log
+- `GET /api/admin/analytics` — admin, aggregated earnings/orders/best-sellers/monthly [F11]
 - `POST /api/admin/login` — admin auth
 
 ## 9. Environment Variables
@@ -186,6 +190,7 @@ ADMIN_PASSWORD_HASH=
 BREVO_API_KEY=
 BREVO_SENDER_EMAIL=
 FRONTEND_URL=            # used to build tracking links in emails
+LOW_STOCK_THRESHOLD=     # optional, default 5 — low-stock admin alert trigger [F11]
 ```
 
 ## 10. Handover Checklist (for the engineer, before leaving the project)
@@ -222,4 +227,4 @@ Each item = one feature session: plan → implement → verify → check off her
 - [x] **F8. Admin auth** — login endpoint, JWT middleware, admin route guard ✓ 2026-08-05 (single admin from env: `ADMIN_EMAIL` + bcrypt `ADMIN_PASSWORD_HASH`, never in Sheets; `POST /api/admin/login` → 12h JWT; `middleware/adminAuth.js` guards admin routes via Bearer token; guarded `GET /api/admin/me` for token re-validation; frontend `stores/admin.js` persists token to localStorage, router `beforeEach` guard on `meta.requiresAdmin`, `api/auth.js` exposes `authHeader()` for F9/F10 admin calls. Deps: bcryptjs, jsonwebtoken. **Temp password `Mart@007` — client must rotate before go-live, see §10**)
 - [x] **F9. Admin: products & categories** — CRUD UI with Cloudinary image upload ✓ 2026-08-05 (guarded `/api/admin/products` [GET/POST/PUT, PATCH `/:id/active`, DELETE soft-delete, POST `/image`] + `/api/admin/categories` [POST/PUT/DELETE]; `infra/cloudinary.js` streams multer memory upload → Cloudinary `rotomart/` folder [secret stays server-side, §5]; category delete blocked while products reference it [no FK integrity, §3]; category rename keeps id stable so product refs don't break; products soft-delete via active toggle [§5]; frontend `AdminNav` + `Products.vue` [modal create/edit form, image preview] + `Categories.vue` [inline rename], `api/adminCatalog.js` uses `authHeader()`; `/admin` redirects to `/admin/products`. Deps: cloudinary, multer. Verified backend via curl + frontend flow via Playwright)
 - [x] **F10. Admin: orders & payouts** — order list, status updates (triggers emails), payout log view ✓ 2026-08-05 (guarded `GET /api/admin/orders` [full buyer/contact + items for fulfillment, newest first], `PATCH /api/admin/orders/:id/status` [settable: ready/shipped/delivered/cancelled; blocks pending_payment; fires F7 `sendStatusUpdate` buyer email on ready/shipped], `GET /api/admin/payouts` [`listPayouts` in payments module — owns split/payout concept]; frontend `Orders.vue` [status filter chips, per-order status select, buyer/items/total], `Payouts.vue` [93/7 totals + per-order table], `api/adminOrders.js`, AdminNav Orders/Payouts links. Backend verified via curl incl. email trigger + guards)
-- [ ] **F11. Polish & handover** — empty/error states, low-stock alert email to admin, walkthrough recording, deploy
+- [~] **F11. Polish & handover** — IN PROGRESS 2026-08-10. Done: Orders page redesigned as table w/ expandable rows + 12h AM/PM time; **order archive** (hide from admin list, keeps sheet row — added `archived` col + `PATCH /orders/:id/archive`); **Analytics** page (`analytics` module → `GET /api/admin/analytics`: earnings/gross/paid-orders/AOV KPIs, best-sellers by revenue, monthly earnings, orders-by-status; charts follow dataviz skill — single-hue magnitude, status palette w/ labels); **low-stock alert email** to `ADMIN_EMAIL` when a sale crosses `LOW_STOCK_THRESHOLD` (default 5, fire-and-forget in `verifyOrder`); polish: favicon (inline SVG), storefront header hidden on `/admin` (was double-header), 404 catch-all page. **Remaining: screen-recorded walkthrough (owner) + deploy (owner+dev).** Note: buyer & admin share one domain/app, separated by route (`/` vs `/admin`), admin behind JWT — optional separate subdomain is a deploy-time DNS choice, not code.
