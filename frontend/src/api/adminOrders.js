@@ -16,3 +16,4 @@ export const adminListOrders = () => request('/admin/orders');
 export const updateOrderStatus = (id, status) => request(`/admin/orders/${id}/status`, { method: 'PATCH', body: { status } });
 export const archiveOrder = (id, archived) => request(`/admin/orders/${id}/archive`, { method: 'PATCH', body: { archived } });
 export const adminListPayouts = () => request('/admin/payouts');
+export const adminAnalytics = () => request('/admin/analytics');

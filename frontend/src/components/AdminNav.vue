@@ -28,6 +28,7 @@ function logout() {
     <div class="container bar">
       <span class="brand">Roto<span>Mart</span> Admin</span>
       <nav class="links">
+        <RouterLink to="/admin/analytics" class="link">Analytics</RouterLink>
         <RouterLink to="/admin/products" class="link">Products</RouterLink>
         <RouterLink to="/admin/categories" class="link">Categories</RouterLink>
         <RouterLink to="/admin/orders" class="link">Orders</RouterLink>
