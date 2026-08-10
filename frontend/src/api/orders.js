@@ -1,6 +1,8 @@
 // Storefront calls for the orders module.
+import { API_BASE } from './base.js';
+
 async function request(path, options) {
-  const res = await fetch(`/api${path}`, options);
+  const res = await fetch(`${API_BASE}/api${path}`, options);
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
   return json;

@@ -1,8 +1,9 @@
 // Admin product + category CRUD (F9). All calls carry the admin JWT via authHeader().
 import { authHeader } from './auth.js';
+import { API_BASE } from './base.js';
 
 async function request(path, { method = 'GET', body } = {}) {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_BASE}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeader() },
     body: body ? JSON.stringify(body) : undefined,
@@ -21,7 +22,7 @@ export const adminSetProductActive = (id, active) => request(`/admin/products/${
 export async function adminUploadImage(file) {
   const form = new FormData();
   form.append('image', file);
-  const res = await fetch('/api/admin/products/image', { method: 'POST', headers: { ...authHeader() }, body: form });
+  const res = await fetch(`${API_BASE}/api/admin/products/image`, { method: 'POST', headers: { ...authHeader() }, body: form });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json.error || `Upload failed (${res.status})`);
   return json.url;

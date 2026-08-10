@@ -1,8 +1,9 @@
 // Admin orders + payouts (F10). All calls carry the admin JWT via authHeader().
 import { authHeader } from './auth.js';
+import { API_BASE } from './base.js';
 
 async function request(path, { method = 'GET', body } = {}) {
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_BASE}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', ...authHeader() },
     body: body ? JSON.stringify(body) : undefined,

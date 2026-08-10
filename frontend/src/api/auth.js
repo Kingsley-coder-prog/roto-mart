@@ -1,8 +1,9 @@
 // Admin auth calls. authHeader() is reused by other admin API modules (F9/F10).
 import { useAdminStore } from '../stores/admin.js';
+import { API_BASE } from './base.js';
 
 export async function login(email, password) {
-  const res = await fetch('/api/admin/login', {
+  const res = await fetch(`${API_BASE}/api/admin/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -13,7 +14,7 @@ export async function login(email, password) {
 }
 
 export async function fetchMe(token) {
-  const res = await fetch('/api/admin/me', { headers: { Authorization: `Bearer ${token}` } });
+  const res = await fetch(`${API_BASE}/api/admin/me`, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) throw new Error('Not authenticated');
   return res.json();
 }
