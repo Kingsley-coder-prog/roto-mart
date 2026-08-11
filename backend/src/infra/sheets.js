@@ -10,6 +10,7 @@ export const TABS = {
   Categories: ['id', 'name', 'slug'],
   Orders: ['id', 'buyerName', 'buyerEmail', 'buyerPhone', 'buyerAddress', 'items', 'subtotal', 'total', 'paystackRef', 'status', 'createdAt', 'archived'],
   Payouts: ['id', 'orderId', 'totalAmount', 'developerShare', 'adminShare', 'paystackSplitRef', 'date'],
+  Settings: ['key', 'value'], // key/value store (e.g. admin password hash) — created on demand
 };
 
 let api; // lazy singleton so dotenv loads before env vars are read
@@ -91,6 +92,23 @@ export async function deleteRow(tab, rowNumber) {
         },
       }],
     },
+  });
+}
+
+/** Create a tab (with its header row) if it doesn't exist yet. Idempotent. */
+export async function ensureTab(tab) {
+  const res = await sheets().spreadsheets.get({ spreadsheetId: sheetId(), fields: 'sheets.properties.title' });
+  if (res.data.sheets.some((s) => s.properties.title === tab)) return;
+  await sheets().spreadsheets.batchUpdate({
+    spreadsheetId: sheetId(),
+    requestBody: { requests: [{ addSheet: { properties: { title: tab } } }] },
+  });
+  gidCache = null; // structure changed
+  await sheets().spreadsheets.values.update({
+    spreadsheetId: sheetId(),
+    range: `${tab}!A1`,
+    valueInputOption: 'RAW',
+    requestBody: { values: [TABS[tab]] },
   });
 }
 

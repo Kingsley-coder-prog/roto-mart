@@ -24,3 +24,14 @@ export function authHeader() {
   const token = useAdminStore().token;
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+export async function changePassword(currentPassword, newPassword) {
+  const res = await fetch(`${API_BASE}/api/admin/password`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeader() },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || `Request failed (${res.status})`);
+  return json;
+}

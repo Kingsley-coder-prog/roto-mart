@@ -17,6 +17,7 @@ const routes = [
   { path: '/admin/orders', name: 'admin-orders', component: () => import('../views/admin/Orders.vue'), meta: { requiresAdmin: true } },
   { path: '/admin/payouts', name: 'admin-payouts', component: () => import('../views/admin/Payouts.vue'), meta: { requiresAdmin: true } },
   { path: '/admin/analytics', name: 'admin-analytics', component: () => import('../views/admin/Analytics.vue'), meta: { requiresAdmin: true } },
+  { path: '/admin/settings', name: 'admin-settings', component: () => import('../views/admin/Settings.vue'), meta: { requiresAdmin: true } },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/storefront/NotFound.vue') },
 ];
 

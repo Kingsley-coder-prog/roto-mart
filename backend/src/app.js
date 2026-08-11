@@ -17,6 +17,8 @@ const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173' }));
 app.use(express.json());
 
+// Root + health both return 200 so uptime monitors on the bare domain read "up".
+app.get('/', (req, res) => res.json({ service: 'RotoMart API', status: 'ok' }));
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Feature module routers are mounted here as they are built (see CLAUDE.md §12)

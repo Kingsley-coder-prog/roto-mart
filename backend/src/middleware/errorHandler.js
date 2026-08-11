@@ -1,9 +1,12 @@
 // Central error handler: modules throw (optionally with err.status); this replies.
-// 502 = an upstream service (Paystack) rejected us — surface its reason (useful to
-// the buyer and for debugging); other 5xx stay generic to avoid leaking internals.
+// The real reason is always logged; buyers get a clean message. 502 = an upstream
+// service (Paystack) failed — a friendly payment message, detail stays in the logs.
 export function errorHandler(err, req, res, next) {
   const status = err.status || 500;
   if (status >= 500) console.error(err);
-  const expose = status < 500 || status === 502;
-  res.status(status).json({ error: expose ? err.message : 'Internal server error' });
+  let error;
+  if (status < 500) error = err.message; // client errors carry a safe, useful reason
+  else if (status === 502) error = 'We couldn’t start your payment just now. Please try again in a moment.';
+  else error = 'Internal server error';
+  res.status(status).json({ error });
 }

@@ -33,6 +33,7 @@ function logout() {
         <RouterLink to="/admin/categories" class="link">Categories</RouterLink>
         <RouterLink to="/admin/orders" class="link">Orders</RouterLink>
         <RouterLink to="/admin/payouts" class="link">Payouts</RouterLink>
+        <RouterLink to="/admin/settings" class="link">Settings</RouterLink>
       </nav>
       <div class="right">
         <span v-if="email" class="who">{{ email }}</span>
