@@ -70,6 +70,11 @@ Order `status` values: `pending_payment` → `paid` → `ready` → `shipped` �
 **Payouts** (optional log for transparency)
 | id | orderId | totalAmount | developerShare | adminShare | paystackSplitRef | date |
 
+**Settings** (key/value; created on demand via `ensureTab`)
+| key | value |
+
+Holds the live admin password hash (`key = adminPasswordHash`) once the admin changes it via the Settings page. **Deviation from §2's "password never in Sheets":** the hash (never plaintext) lives here so password change can be self-service without a redeploy; env `ADMIN_PASSWORD_HASH` remains the initial fallback until first change.
+
 Use `googleapis` (official Google Node client) with a **service account** (not OAuth user login) so the backend can read/write without repeated admin sign-in. Share the sheet with the service account's email as Editor.
 
 ## 5. Admin CMS (non-technical handover)
@@ -171,6 +176,8 @@ Rules: modules never import each other's controllers — cross-module needs go t
 - `GET /api/admin/payouts` — admin, payout log
 - `GET /api/admin/analytics` — admin, aggregated earnings/orders/best-sellers/monthly [F11]
 - `POST /api/admin/login` — admin auth
+- `PATCH /api/admin/password` — admin, self-service password change (verifies current, stores new bcrypt hash in the Settings tab) [post-F11]
+- `GET /` and `GET /api/health` — both return 200 (uptime monitors can watch the bare domain)
 
 ## 9. Environment Variables
 
@@ -196,7 +203,7 @@ LOW_STOCK_THRESHOLD=     # optional, default 5 — low-stock admin alert trigger
 ## 10. Handover Checklist (for the engineer, before leaving the project)
 
 - [ ] Admin dashboard covers every action the admin needs — no task requires opening the Google Sheet or code directly
-- [ ] Admin has their own login credentials (not the developer's) — **the client must set their OWN admin password before go-live** (dev used a temporary `Mart@007` that was shared in chat). Regenerate the hash with the client's chosen password: `node -e "console.log(require('bcryptjs').hashSync('THEIR_PASSWORD',10))"` and replace `ADMIN_PASSWORD_HASH` in `.env`. Also rotate `JWT_SECRET` for production.
+- [ ] Admin has their own login credentials (not the developer's) — **the client must set their OWN admin password before go-live** (dev used a temporary `Mart@007` that was shared in chat). Easiest: the client logs in and changes it via the **admin Settings page** (self-service, stores the new hash in the Settings tab). Alternatively regenerate the env hash: `node -e "console.log(require('bcryptjs').hashSync('THEIR_PASSWORD',10))"`. Also rotate `JWT_SECRET` for production.
 - [ ] **Paystack Config B live setup** (see §6): client completes their OWN Paystack account (their email + **their** BVN/business docs + their bank) as the main/merchant account; developer registers a subaccount on it (developer's bank). Then in the app: set `PAYSTACK_DEVELOPER_SUBACCOUNT_CODE`, swap in the **client's** live API keys, change `transaction_charge` to 93%, and verify with a small real transaction that client got 93% + developer got 7%.
 - [ ] Rename the Paystack business to **RotoMart** and support email to **irotomart@gmail.com**; turn off Paystack's own customer receipt email (we send our own branded confirmation) so buyers don't get a second, off-brand email.
 - [ ] Verify the Brevo sender (irotomart@gmail.com, ideally a domain) so confirmation/status emails don't land in spam
